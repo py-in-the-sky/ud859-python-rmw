@@ -12,3 +12,9 @@ in the development of the full application.  This project uses branches instead.
 order to get lesson 2's version, for example, type "git checkout lesson-2" at the
 command line; to get the final version, type "git checkout conference-central-complete"
 at the command line.
+
+Git branches:
+
+1. endpoints-getting-started: complete code from the Google Developers endpoints tutorial
+2. lesson2a: the "Hello Endpoints" app developed in the first half of UD859 lesson 2
+3. lesson2b: the start of the "Conference Central" app in the second half of UD859 lesson 2
