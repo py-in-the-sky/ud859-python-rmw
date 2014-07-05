@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Archaeology Solution</title>
+    <meta charset="UTF-8">
+    <meta name=viewport content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <script type="text/javascript">
+      WebFontConfig = {
+        google: { families: [ 'Roboto+Slab::latin', 'Roboto::latin' ] }
+      };
+      (function() {
+        var wf = document.createElement('script');
+        wf.src = ('https:' == document.location.protocol ? 'https' : 'http') +
+          '://ajax.googleapis.com/ajax/libs/webfont/1/webfont.js';
+        wf.type = 'text/javascript';
+        wf.async = 'true';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(wf, s);
+      })();
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.0/styles/default.min.css" rel="stylesheet" media="screen">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.0/styles/monokai_sublime.min.css" rel="stylesheet" media="screen">
+    <style>
+        body {
+            /*color: #474747;*/
+            background-color: #F3F0FA;
+        }
+        p > code {
+            color: #333333;
+        }
+        h1, h2, p {
+            letter-spacing: 0.00015em;
+            word-spacing: 0.05em;
+        }
+        h1 {
+            font-family: 'Roboto Slab', serif;
+        }
+        h2, p {
+            font-family: 'Roboto', 'Helvetica', sans-serif;
+        }
+    </style>
+</head>
+<body>
+<section class="container-fluid row">
+    <h1 class="text-center col-md-6 col-md-offset-3">Ryan Wise's solution to LegitScript's Archaelogy problem.</h1>
+
+    <div class="col-md-8 col-md-offset-2">
+
+    <br><br>
+
+    <div class="container-fluid row">
+        <ul class="list-group col-sm-4">
+            <li class="list-group-item"><a href="#OriginalCode">1. The Original Code</a></li>
+            <li class="list-group-item"><a href="#Discussion">2. Discussion of the Code</a></li>
+            <li class="list-group-item"><a href="#MyCode">3. My Code Revision</a></li>
+        </ul>
+    </div>
+
+    <h2 id="#OriginalCode">The original Python code from LegitScript's Archaeology.pdf:</h2>
+    <pre><code>
+        def function(a):
+
+            def f1(a, b):
+                a[b] = (a.get(b) or 0) + 1
+                return a
+
+            return map(lambda a: a[0],
+                       filter(lambda a: not a[1] == 1,
+                              reduce(f1, a, {}).items()))
+    </code></pre>
+
+    <h2 id="Discussion">Discussion:</h2>
+    <p>
+        The function above will return a list of unique items, each being an item of
+        <code>a</code> that occurs at least twice in <code>a</code>.  So, for example, <code>function([1, 2, 1])</code> will
+        return the list <code>[1]</code> because <code>1</code> occurs twice in the input but <code>2</code> occurs only once.  The input <code>a</code>
+        must be a Python iterable with all elements being immutable types.  If the
+        input <code>a</code> is not an iterable, then an error will be raised because the call to
+        <code>reduce</code> expects that <code>a</code> be an iterable.  Furthermore, if any element of <code>a</code> is
+        mutable, an error will be raised because the function <code>f1</code> will try to make each
+        item from <code>a</code> be a key in a dictionary, and Python's default behavior requires
+        that only immutable objects be used as dictionary keys.
+    </p>
+    <p>
+        This paragraph explains how the function works when <code>a</code> is an iterable.  We'll start with the
+        most deeply nested function call: <code>reduce(f1, a, {})</code>.  This function call returns
+        a dictionary where each key is an element of <code>a</code> and the corresponding value is
+        the count of times that the element occurs in <code>a</code>.  Then the method call to <code>items</code>
+        returns a list of (element, count) tuples that <code>filter</code> then iterates over.
+        <code>filter</code> then checks the second value (i.e., the count) in each tuple and
+        keeps the tuple if the second value is not <code>1</code>; by the definition of <code>f1</code>, all counts will be
+        <code>1</code> or greater, so the call to <code>filter</code> will result in a list of (element, count)
+        tuples where count is greater than <code>1</code>.  Then the call to <code>map</code> will take this list
+        of (element, count) tuples and convert it to a list containing just the elements.  Finally, <code>function</code>
+        will return the result of the call to <code>map</code>: a list of all the elements of <code>a</code>
+        that occur at least twice in <code>a</code>.
+    </p>
+    <p>
+        A clearer, equivalent function, <code>get_repeated_items</code>, is presented below.  It uses the Counter class
+        from the collections module of the Python standard library.  The comments in
+        the code explain what each line does.  I believe this new function is clearer for several
+        reasons.  First, more variables are used.  That is, instead of having multiple
+        nested function calls, the results of the functions are stored in variables,
+        and this lets the reader digest a smaller amount of logic per line of code and more easily
+        reason about how it all works together.
+        Second, the variable, argument, and function names are more semantic; they describe
+        what values or behavior they refer to, making it easier to read through the code without
+        having to refer back to earlier lines to remind oneself of the meaning of a variable.
+        Third, the use of functions and classes from the Python standard library, instead of writing our own, allows the
+        code to be more concise.  For example, using <code>Counter(itr)</code> allows us to replace
+        the more verbose definition of <code>f1</code> as well as the call <code>reduce(f1, a, {})</code>.
+        Fourth, the use of a list comprehension replaces separate calls to <code>map</code>
+        and <code>filter</code> and presents the mapping and filtering choices more clearly and concisely to the reader.
+        Fifth, the new function is given a doc string explaining the expected input and output
+        of the function, and lines of code are commented, explaining how the function
+        accomplishes its work, helping people who may be unfamiliar with how some of the
+        objects used inside the function behave.  Finally, a little optimization has
+        been added, avoiding unnecessary work on sets and dicts since their
+        keys necessarily occur only once each.
+    </p>
+<!--    <p>
+        Just as a matter of good practice, I have added tests to check that <code>get_repeated_items</code>
+        has the same behavior as <code>function</code>.
+    </p>-->
+
+    <h2 id="MyCode">My code revision:</h2>
+    <pre><code>
+        from collections import Counter
+
+
+        def get_repeated_items(itr):
+            """Returns a list of all items from itr that occur
+            at least twice in itr.
+
+            params:
+            itr is an iterable collection of immutable objects
+            """
+            # Because each element in a hash table occurse only
+            # once, we don't need to run dicts or sets through
+            # the function; we can immediately return an empty
+            # list since no element occurs more than once.
+            if isinstance(itr, (dict, set)):
+                return []
+
+            # Counter(itr) returns a dictionary where each key
+            # is an element from itr and the corresponding value
+            # is the number of times it appears in itr.
+            # Then the method call to iteritems returns a lazy
+            # sequence of (element, count) tuples.
+            counts = Counter(itr).iteritems()
+
+            # Return a list of all elements with count greater than one.
+            return [elm for elm,count in counts if count > 1]
+
+
+        def tests():
+            "Check that get_repeated_items and function have the same behavior."
+            test1 = 'aabc'
+            test2 = set([test1])
+            test3 = Counter(test1)
+            test4 = (1, 2, 3, 4, 4, 5, 1)
+            assert get_repeated_items(test1) == ['a']
+            assert get_repeated_items(test2) == []
+            assert get_repeated_items(test3) == []
+            assert sorted(get_repeated_items(test4)) == [1, 4]
+            assert get_repeated_items(test1) == function(test1)
+            assert get_repeated_items(test2) == function(test2)
+            assert get_repeated_items(test3) == function(test3)
+            assert sorted(get_repeated_items(test4)) == sorted(function(test4))
+            return 'tests pass!'
+    </code></pre>
+    </div>
+</section>
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.0/highlight.min.js"></script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script>
+</html>

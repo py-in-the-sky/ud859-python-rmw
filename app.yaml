@@ -14,8 +14,9 @@ handlers:
   secure: always
 # Endpoints handler
 - url: /_ah/spi/.*
-  script: helloendpoints_api.app
+  script: conference.conference_api.app
   secure: always
+#  login: required
 - url: /
   static_files: static/index.html
   upload: static/index\.html
@@ -24,9 +25,6 @@ handlers:
   static_files: static/archaeology.html
   upload: static/archaeology\.html
   secure: always
-#- url: .*
-#  script: main.app
-#  secure: always
 
 skip_files:
 - ^(.*/)*#.*#$
@@ -45,13 +43,13 @@ skip_files:
 # TODO: create paver job to uncomment the lines below for appengine deployment
 # they must remain commented for local development since venv is the Python interpreter used
 # however, when deployed, the app only needs the third-party libraries in venv/lib/python2.7/site-packages
-- ^venv/bin/(.*/)*.*$
-- ^venv/include/(.*/)*.*$
-- ^venv/lib/python2\.7/[^/]*\.(py|txt)$
-- ^venv/lib/python2\.7/config/(.*/)*.*$
-- ^venv/lib/python2\.7/distutils/(.*/)*.*$
-- ^venv/lib/python2\.7/encodings/(.*/)*.*$
-- ^venv/lib/python2\.7/lib-dynload/(.*/)*.*$
+#- ^venv/bin/(.*/)*.*$
+#- ^venv/include/(.*/)*.*$
+#- ^venv/lib/python2\.7/[^/]*\.(py|txt)$
+#- ^venv/lib/python2\.7/config/(.*/)*.*$
+#- ^venv/lib/python2\.7/distutils/(.*/)*.*$
+#- ^venv/lib/python2\.7/encodings/(.*/)*.*$
+#- ^venv/lib/python2\.7/lib-dynload/(.*/)*.*$
 
 libraries:
 - name: webapp2
