@@ -1,11 +1,3 @@
-# for google users api, see:
-# https://developers.google.com/appengine/docs/python/users/
-
-
-# from protorpc import messages
-# from protorpc import message_types
-# from google.appengine.api import users
-
 from endpoints import UnauthorizedException, get_current_user
 from protorpc import remote
 from constants import *
