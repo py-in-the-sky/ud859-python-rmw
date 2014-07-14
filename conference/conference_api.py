@@ -2,15 +2,10 @@
 # https://developers.google.com/appengine/docs/python/users/
 
 
-# from protorpc import messages
-# from protorpc import message_types
-# from google.appengine.api import users
-
-from endpoints import UnauthorizedException, get_current_user
+from endpoints import get_current_user
 from protorpc import remote
 from constants import *
 from profile import Profile
-from profile_form import ProfileForm
 
 
 package = 'conference'
@@ -33,22 +28,52 @@ def _extractDefaultDisplayNameFromEmail(email):
 class ConferenceApi(remote.Service):
     "Defines full Conference Central API."
 
-    @endpoints.method(ProfileForm, Profile, name='saveProfile', path='profile')
-    def save_profile(self, request):
-        # user = users.get_current_user()
+    # @endpoints.method(ProfileForm, Profile, name='saveProfile', path='profile')
+    @Profile.method(name='saveProfile', path='profile', user_required=True,
+                    request_fields=('displayName', 'teeShirtSize'))
+    def save_profile(self, profile):
+        # above we have user_required=True, so we know user is authorized if
+        # we're in the body of this method; otherwise, endpoints_proto_datastore
+        # will have thrown a 401 error
         user = get_current_user()
 
-        if user is None:
-            raise UnauthorizedException("Authorization required.")
+        # if user is None:
+        #     raise UnauthorizedException("Authorization required.")
 
-        user_id = user.user_id()
-        main_email = user.email()
-        display_name = (request.displayName or
-                        _extractDefaultDisplayNameFromEmail(main_email))
-        teeshirt_size = request.teeShirtSize or 'NOT_SPECIFIED'
+        # see whether profile already exists and then update or insert new one
+        query = Profile.query(Profile.userId == user.user_id()).get()
+        if query:
+            query.update(profile.displayName, profile.teeShirtSize)
+            profile = query
 
-        return Profile(userId=user_id, displayName=display_name,
-                       mainEmail=main_email, teeShirtSize=teeshirt_size)
+        else:
+            profile.userId = user.user_id()
+            profile.mainEmail = user.email()
+            profile.displayName = (profile.displayName or
+                             _extractDefaultDisplayNameFromEmail(user.email()))
+            profile.teeShirtSize = profile.teeShirtSize or 'NOT_SPECIFIED'
+
+        profile.put()  # save to database
+
+        return profile
+
+        # user_id = user.user_id()
+        # main_email = user.email()
+        # display_name = (request.displayName or
+        #                 _extractDefaultDisplayNameFromEmail(main_email))
+        # teeshirt_size = request.teeShirtSize or 'NOT_SPECIFIED'
+        #
+        # return Profile(userId=user_id, displayName=display_name,
+        #                mainEmail=main_email, teeShirtSize=teeshirt_size)
+
+    @Profile.query_method(name='getProfile', path='profile',
+                          user_required=True)
+    def get_profile(self, query=None):
+        # above we have user_required=True, so we know user is authorized if
+        # we're in the body of this method; otherwise, endpoints_proto_datastore
+        # will have thrown a 401 error
+        user = get_current_user()
+        return Profile.query(Profile.userId == user.user_id())
 
 
 app = endpoints.api_server([ConferenceApi])

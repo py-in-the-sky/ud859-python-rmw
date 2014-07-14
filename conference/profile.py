@@ -1,15 +1,21 @@
-from protorpc import messages
+from google.appengine.ext import ndb
+from endpoints_proto_datastore.ndb import EndpointsModel
 
 
-class Profile(messages.Message):
+class Profile(EndpointsModel):
     "Represents a user profile."
-    userId = messages.StringField(1)
-    displayName = messages.StringField(2)
-    mainEmail = messages.StringField(3)
-    teeShirtSize = messages.StringField(4)
+    _message_fields_schema = ('userId', 'displayName',
+                              'mainEmail', 'teeShirtSize')
 
-    # def __init__(self, user_id, display_name, main_email, tee_shirt_size):
-    #     self.user_id = user_id
-    #     self.display_name = display_name
-    #     self.main_email = main_email
-    #     self.tee_shirt_size = tee_shirt_size
+    userId = ndb.StringProperty()  # messages.StringField(1)
+    displayName =  ndb.StringProperty()  # messages.StringField(2)
+    mainEmail = ndb.StringProperty()  # messages.StringField(3)
+    teeShirtSize = ndb.StringProperty()  # messages.StringField(4)
+
+    def update(self, displayName, teeShirtSize):
+        "update values of displayName and teeShirtSize if changed"
+        if displayName:
+            self.displayName = displayName
+
+        if teeShirtSize:
+            self.teeShirtSize = teeShirtSize

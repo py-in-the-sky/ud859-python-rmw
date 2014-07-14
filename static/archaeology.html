@@ -55,6 +55,7 @@
             <li class="list-group-item"><a href="#OriginalCode">1. The Original Code</a></li>
             <li class="list-group-item"><a href="#Discussion">2. Discussion of the Code</a></li>
             <li class="list-group-item"><a href="#MyCode">3. My Code Revision</a></li>
+            <li class="list-group-item"><a href="#Performance">4. Performance Analysis</a></li>
         </ul>
     </div>
 
@@ -170,6 +171,129 @@
             assert get_repeated_items(test3) == function(test3)
             assert sorted(get_repeated_items(test4)) == sorted(function(test4))
             return 'tests pass!'
+    </code></pre>
+
+    <h2 id="Performance">Performance</h2>
+    <p>
+        The runtime and memory complexity of <code>function</code> and
+        <code>get_repeated_items</code> is <i>O(n)</i>, or linear, where <i>n</i> is the
+        number of items in the iterable input.
+    </p>
+    <p>
+        First, <code>function</code>.  The runtime complexity is linear because
+        the input is transformed via a series of functions that are also linear
+        in the input size: <code>reduce</code> touches each item of the input once
+        and applies the constant-time function <code>f1</code> to each item, resulting
+        in a Python dictionary that has at most as many keys as there are items
+        in the input <code>a</code>; then the method call <code>items</code> just
+        converts this dictionary of element-count pairs to a list of (element, count)
+        tuples; then <code>filter</code> touches each tuple from this list once, producing
+        a new list that is at most as long as <code>a</code>; finally, <code>map</code>
+        takes this list and visits each tuple once, extracting the element from each
+        (element, count) tuple, returning a list that is at most as long as <code>a</code>.
+        The description above also shows why <code>function</code>'s memory complexity
+        is also linear: in the process of generating its output, <code>function</code>
+        generates one dictionary and three lists, all of which are no longer than
+        the original input <code>a</code>.  So if <code>a</code> has <i>n</i>
+        elements, this means <code>function</code>'s memory complexity is at
+        most <i>4n</i>, which is <i>O(n)</i>.
+    </p>
+    <p>
+        Now <code>get_repeated_items</code>.  The runtime complexity is linear
+        because its input is also transformed via a series of functions that are
+        linear in the input size: <code>Counter(itr)</code> visits each element
+        of <code>itr</code> once; the method call to <code>iteritems</code> returns
+        an iterator that will visit each element-count once; finally, the list
+        comprehension visits each element once, checking that the count is greater
+        than one and if so including the element in the list.  The memory complexity
+        is linear because in the process of generating its output, <code>get_repeated_items</code>
+        creates a dictionary that is no longer than <code>itr</code> and a list
+        that is no longer than <code>itr</code>.  So if <code>itr</code> has <i>n</i>
+        elements, this means the memory complexity is at
+        most <i>2n</i>, which is <i>O(n)</i>.
+    </p>
+    <p>
+        Although both functions have the same big-oh performance, we could take
+        a more granular view and see that <code>get_repeated_items</code> is somewhat
+        better both in terms of runtime and memory.  We can see above that,
+        when we don't strip out coefficients with big-oh notation,
+        <code>function</code>'s memory usage is at most four times the input size,
+        whereas <code>get_repeated_items</code>'s is at most two times.
+        Furthermore, by running the profiling code below, we can see that
+        <code>get_repeated_items</code> makes fewer function calls and hence has
+        to instantiate fewer objects in memory.  Therefore,
+        <code>get_repeated_items</code> likely wins out on memory usage.
+    </p>
+    <p>
+        In terms of runtime performance, I first assumed that <code>get_repeated_items</code>'s
+        memory advantage would also translate to a runtime advantage: since it has to spend
+        less time instantiating lists, it must save on time.
+        The calls to <code>run</code> in the code below showed that <code>function</code>
+        takes almost 18 seconds longer than <code>get_repeated_items</code> on
+        my computer on an input of size <i>100 * 2**20</i>, which seemed to support my assumption.
+        However, the profiling results
+        from <code>run</code> showed that the call to <code>reduce</code>
+        in <code>function</code> accounts for the 18-second
+        difference on my computer.  This suggests that the built-in <code>Counter</code> far
+        outperforms the use of <code>reduce</code> and <code>f1</code>.  Since
+        both <code>function</code> and <code>get_repeated_items</code> are linear in the input but <code>function</code> seems to
+        be slower, the runtime difference between the two functions will likely grow
+        linearly with larger inputs.
+
+        <!--, which supports the-->
+        <!--argument that although both functions are <i>O(n)</i>, <code>function</code>-->
+        <!--has a larger coefficient that will make the time difference between-->
+        <!--the two functions grow linearly as the input size grows.-->
+    </p>
+    <p>
+        Finally, the for-loops in the code below also provide empirical support for the argument that the
+        functions' runtimes grow linearly in the input.  The tests
+        are limited because they're all based on multiples of <code>range(100)</code>; however,
+        using these inputs, the test do show that the runtimes double as the input size doubles.
+    </p>
+    <pre><code>
+        def profile():
+            from timeit import timeit
+            from cProfile import run
+            """Empirical comparison of the runtime performance of
+            get_repeated_items and function.  This comparison
+            doubles the size of the input to get_repeated_items
+            and function on each loop and then calls the functions.
+            It then collect runtime measurements.
+            """
+            # capture the growth rates of the functions by
+            # iteratively doubling the size of the input
+            # and then timing the function call
+            my_fn = [timeit('fn(range(100) * 2**{})'.format(i),
+                            setup='from __main__ import get_repeated_items as fn',
+                            number=10)
+                     for i in xrange(5, 15)]
+
+            orig_fn = [timeit('fn(range(100) * 2**{})'.format(i),
+                             setup='from __main__ import function as fn',
+                             number=10)
+                       for i in xrange(5, 15)]
+
+            my_fn_growth = (t/my_fn[i-1] for i,t in enumerate(my_fn) if i > 0)
+            orig_fn_growth = (t/orig_fn[i-1] for i,t in enumerate(orig_fn) if i > 0)
+
+
+            print 'Growth rate of get_repeated_items:'
+            for rate in my_fn_growth:
+                print 'When input size doubled, runtime grows by factor of', rate
+
+            print
+
+            print 'Growth rate of function:'
+            for rate in orig_fn_growth:
+                print 'When input size doubled, runtime grows by factor of', rate
+
+            print
+
+            # compare the profiles, including the CPU runtimes, of the two
+            # functions by calling them both once on very large inputs
+            run('get_repeated_items(range(100) * 2**20)')
+            run('function(range(100) * 2**20)')
     </code></pre>
     </div>
 </section>
